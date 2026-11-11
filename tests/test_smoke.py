@@ -4,6 +4,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
+
 from supplydesk.service import OrderService
 
 
@@ -39,7 +40,38 @@ class OrderSmokeTests(unittest.TestCase):
         cancelled = self.service.cancel_order(order["order_id"])
         self.assertEqual(cancelled["status"], "cancelled")
         self.assertEqual(self.service.catalog(), before)
-
-
+    #normal behaviour tests
+    def test_normal_input(self):
+        order = self.service.place_order("regular", [{"product_id": "mug", "quantity": 1}])
+        self.assertEqual(order["order_id"], "ORD-0001")
+        self.assertEqual(order["status"], "placed")
+        self.assertEqual(OrderService(self.path).get_order(order["order_id"]), order)
+    #boundary behaviour tests
+    def test_boundary_empty_stock(self):
+        order = self.service.place_order("regular", [{"product_id": "notebook", "quantity": 10}])
+        stock = self.service.catalog()
+        notebook = next((item for item in stock if item["product_id"] == "notebook"), None)
+        self.assertIsNotNone(notebook)
+        self.assertEqual(notebook["stock"], 0)
+        self.assertEqual(order["order_id"], "ORD-0001")
+        self.assertEqual(order["status"], "placed")
+        self.assertEqual(OrderService(self.path).get_order(order["order_id"]), order)
+    #exceptional behaviour tests
+    def test_invalid_input(self):
+        self.service.place_order("regular", [{"product_id": "invalid-product", "quantity": 1}])
+        self.assertRaises(ValueError, self.service.place_order, "regular", [{"product_id": "invalid-product", "quantity": 1}])
+    def test_cancel_nonexistent_order(self):
+        self.service.cancel_order("ORD-9999")
+        self.assertRaises(ValueError, self.service.cancel_order, "ORD-9999")
+    #existing functionality tests
+    def test_order_can_be_placed(self):
+        order = self.service.place_order("regular", [{"product_id": "mug", "quantity": 1}])
+        self.assertEqual(order["order_id"], "ORD-0001")
+        self.assertEqual(order["status"], "placed")
+        self.assertEqual(OrderService(self.path).get_order(order["order_id"]), order)
+    def test_order_can_be_cancelled(self):
+        order = self.service.place_order("regular", [{"product_id": "pen-pack", "quantity": 2}])
+        cancelled = self.service.cancel_order(order["order_id"])
+        self.assertEqual(cancelled["status"], "cancelled")
 if __name__ == "__main__":
     unittest.main()

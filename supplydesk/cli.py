@@ -19,6 +19,7 @@ def parse_item(value):
     return {"product_id": product_id, "quantity": quantity}
 
 
+
 def build_parser():
     parser = argparse.ArgumentParser(description="Campus Supply Desk")
     parser.add_argument(
@@ -39,7 +40,7 @@ def build_parser():
     cancel.add_argument("order_id")
     return parser
 
-
+#bloater - over 20 lines, overly complex if/else statment, no else from first if, difficult to modify if app grows, implicit order cancel if command is not listed
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)

@@ -176,7 +176,6 @@ class OrderService:
         self.customer_type_validation(customer_type)
         self.fulfillment_validation(fulfillment)
         self.items_validation(items)
-        self.quantity_validation(self, quantity)
         state = self.store.load()
         product_lookup = {product["product_id"]: product for product in state["catalog"]}
         requested_quantities = {}

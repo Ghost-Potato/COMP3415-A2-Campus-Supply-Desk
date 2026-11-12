@@ -230,11 +230,11 @@ class OrderService:
             "total_cents": subtotal - discount + delivery,
         }
 
-    def quote(self, customer_type, items, fulfillment):
+    def quote(self, customer_type, items, fulfillment="pickup"):
         state = self.service_error_check(customer_type, fulfillment, items)
         return self.order_calculation(customer_type, fulfillment, items, state)
 
-    def place_order(self, customer_type, items, fulfillment):
+    def place_order(self, customer_type, items, fulfillment="pickup"):
         state = self.service_error_check(customer_type, fulfillment, items)
         order = self.order_calculation(customer_type, fulfillment, items, state)
         order = {

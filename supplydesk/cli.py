@@ -31,7 +31,9 @@ def build_parser():
     for name in ("quote", "place"):
         command = commands.add_parser(name)
         command.add_argument("--customer", choices=("regular", "student"), default="regular")
-        command.add_argument("--fulfillment", choices=("pickup", "delivery"), default="pickup")
+        command.add_argument(
+            "--fulfillment", choices=("pickup", "delivery", "express"), default="pickup"
+        )
         command.add_argument("--item", type=parse_item, action="append", required=True)
     commands.add_parser("orders", help="list orders in placement order")
     show = commands.add_parser("show", help="show one order")
@@ -40,7 +42,6 @@ def build_parser():
     cancel.add_argument("order_id")
     return parser
 
-#bloater - over 20 lines, overly complex if/else statment, no else from first if, difficult to modify if app grows, implicit order cancel if command is not listed
 def main(argv=None):
     parser = build_parser()
     args = parser.parse_args(argv)

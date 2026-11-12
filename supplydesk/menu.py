@@ -26,6 +26,7 @@ def read_request(service):
     show_catalog(service.catalog())
     print("Enter product IDs from the table. Blank product ID finishes the item list.")
     customer = input("Customer type [regular/student] (Enter = regular): ").strip() or "regular"
+    service.customer_type_validation(customer)
     items = []
     while True:
         product_id = input("Product ID (Enter = finish): ").strip()
@@ -38,47 +39,118 @@ def read_request(service):
             print("Please enter a whole number. Re-enter this item.")
             continue
         items.append({"product_id": product_id, "quantity": quantity})
-    fulfillment = input("Fulfillment [pickup/delivery] (Enter = pickup): ").strip() or "pickup"
+    fulfillment = input("Fulfillment [pickup/delivery/express] (Enter = pickup): ").strip() or "pickup"
+    service.fulfillment_validation(fulfillment)
     return customer, items, fulfillment
 
 
+# def run_menu(service):
+#     print("Campus Supply Desk | All prices are CAD. Orders are saved automatically.")
+#     while True:
+#         try:
+#             print("\n1. View products and stock\n2. Get a quote\n3. Place an order"
+#                   "\n4. View order history\n5. Find an order\n6. Cancel an order\n0. Exit")
+#             choice = input("Choose an option: ").strip()
+#             if choice == "0":
+#                 print("Goodbye.")
+#                 return 0
+#             if choice == "1":
+#                 show_catalog(service.catalog())
+#             elif choice in ("2", "3"):
+#                 request = read_request(service)
+#                 if choice == "2":
+#                     show_order(service.quote(*request))
+#                     print("Quote only: no stock reserved and no order created.")
+#                 else:
+#                     show_order(service.quote(*request))
+#                     if input("Place this order? [y/N]: ").strip().lower() == "y":
+#                         show_order(service.place_order(*request))
+#                     else:
+#                         print("Order not placed.")
+#             elif choice == "4":
+#                 orders = service.list_orders()
+#                 if not orders:
+#                     print("No orders yet.")
+#                 for order in orders:
+#                     show_order(order)
+#             elif choice == "5":
+#                 show_order(service.get_order(input("Order ID: ").strip()))
+#             elif choice == "6":
+#                 order_id = input("Order ID to cancel: ").strip()
+#                 if input("Cancel this order? [y/N]: ").strip().lower() == "y":
+#                     show_order(service.cancel_order(order_id))
+#                 else:
+#                     print("Cancellation abandoned.")
+#             else:
+#                 print("Choose a number from 0 to 6.")
+#         except (EOFError, KeyboardInterrupt):
+#             print("\nGoodbye.")
+#             return 0
+#         except (ValueError, OSError, KeyError, TypeError) as error:
+#             print(f"Error: {error}")
+#             print("Returning to the menu. Check your input or state file before retrying.")
+
+#refactored code using handlers and a dictionary to map menu options to functions
+def handle_catalog(service):
+    show_catalog(service.catalog())
+
+def handle_quote(service):
+    request = read_request(service)
+    show_order(service.quote(*request))
+    print("Quote only: no stock reserved and no order created.")
+
+def handle_place_order(service):
+    request = read_request(service)
+    show_order(service.quote(*request))
+    if confirm("Place this order? [y/N]: "):
+        show_order(service.place_order(*request))
+    else:
+        print("Order not placed.")
+
+def handle_order_history(service):
+    orders = service.list_orders()
+    if not orders:
+        print("No orders yet.")
+    for order in orders:
+        show_order(order)
+
+def handle_find_order(service):
+    show_order(service.get_order(input("Order ID: ").strip()))
+
+def handle_cancel_order(service):
+    order_id = input("Order ID to cancel: ").strip()
+    if confirm("Cancel this order? [y/N]: "):
+        show_order(service.cancel_order(order_id))
+    else:
+        print("Cancellation abandoned.")
+
+def confirm(prompt):
+    return input(prompt).strip().lower() == "y"
+
+#menu display
+def display_menu():
+    print(
+        "\n1. View products and stock" 
+        "\n2. Get a quote" 
+        "\n3. Place an order"
+        "\n4. View order history" 
+        "\n5. Find an order" 
+        "\n6. Cancel an order" 
+        "\n0. Exit"
+    )
+
+#run_menu
 def run_menu(service):
     print("Campus Supply Desk | All prices are CAD. Orders are saved automatically.")
     while True:
         try:
-            print("\n1. View products and stock\n2. Get a quote\n3. Place an order"
-                  "\n4. View order history\n5. Find an order\n6. Cancel an order\n0. Exit")
+            display_menu()
             choice = input("Choose an option: ").strip()
             if choice == "0":
                 print("Goodbye.")
                 return 0
-            if choice == "1":
-                show_catalog(service.catalog())
-            elif choice in ("2", "3"):
-                request = read_request(service)
-                if choice == "2":
-                    show_order(service.quote(*request))
-                    print("Quote only: no stock reserved and no order created.")
-                else:
-                    show_order(service.quote(*request))
-                    if input("Place this order? [y/N]: ").strip().lower() == "y":
-                        show_order(service.place_order(*request))
-                    else:
-                        print("Order not placed.")
-            elif choice == "4":
-                orders = service.list_orders()
-                if not orders:
-                    print("No orders yet.")
-                for order in orders:
-                    show_order(order)
-            elif choice == "5":
-                show_order(service.get_order(input("Order ID: ").strip()))
-            elif choice == "6":
-                order_id = input("Order ID to cancel: ").strip()
-                if input("Cancel this order? [y/N]: ").strip().lower() == "y":
-                    show_order(service.cancel_order(order_id))
-                else:
-                    print("Cancellation abandoned.")
+            elif choice in menu_options:
+                menu_options[choice](service)
             else:
                 print("Choose a number from 0 to 6.")
         except (EOFError, KeyboardInterrupt):
@@ -87,3 +159,13 @@ def run_menu(service):
         except (ValueError, OSError, KeyError, TypeError) as error:
             print(f"Error: {error}")
             print("Returning to the menu. Check your input or state file before retrying.")
+
+#dictionary
+menu_options = {
+    "1": handle_catalog,
+    "2": handle_quote,
+    "3": handle_place_order,
+    "4": handle_order_history,
+    "5": handle_find_order,
+    "6": handle_cancel_order
+}
